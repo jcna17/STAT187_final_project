@@ -60,7 +60,8 @@ data_recode <- data %>%
          lost_smell = factor(lost_smell, levels = yn_levels),
          lost_taste = factor(lost_taste, levels = yn_levels),
          short_of_breath = factor(short_of_breath, levels = yn_levels),
-         no_symp = factor(no_symp, levels = yn_levels)
+         no_symp = factor(no_symp, levels = yn_levels),
+         doctor_after_symp = factor(doctor_after_symp, levels = yn_levels),
          ) %>%
   #convert from frequency character to factor
   mutate(mask = factor(mask, levels = freq_levels),
@@ -82,17 +83,42 @@ data_recode <- data %>%
          stop_share_bedroom = factor(stop_share_bedroom, levels = freq_levels),
          stop_share_meals = factor(stop_share_meals, levels = freq_levels),
          surface_cleaning = factor(surface_cleaning, levels = freq_levels),
-         avoid_touching_public_objects = factor(avoid_touching_public_objects, levels = freq_levels)
+         avoid_touching_public_objects = factor(avoid_touching_public_objects, levels = freq_levels),
+         isolate_after_symp = factor(isolate_after_symp, levels = freq_levels)
          ) %>%
   #convert other characters to factor
-  mutate(tested = factor(tested, levels = c("No, I have not", "Yes, and I tested positive",
+  mutate(tested = factor(tested, 
+                         levels = c("No, I have not", "Yes, and I tested positive",
                                             "Yes, and I have not received my results from the test yet",                                                 "Yes, and I tested negative"),
-                                 labels = c("N", "Y+", "Y~", "Y-")))
+                         labels = c("N", "Y+", "Y~", "Y-")),
+         hh_tested = factor(hh_tested, 
+                            levels = c("No, they have not", "Yes, and they tested positive",
+                                                  "Yes, and they have not received their results from the test yet", "Yes, and they tested negative"), 
+                            labels = c("N", "Y+", "Y~", "Y-")),
+         gender = factor(gender, levels = c("Male", "Female")),
+         contact_symp_person = factor(contact_symp_person,
+                                      levels = c("Not sure", "No", "Yes")),
+         travel_before_symp = factor(travel_before_symp,levels = c("Not sure", "No", "Yes")),
+         isolate_if_symp = factor(isolate_if_symp, levels = c("Not sure", "No", "Yes")),
+         isolation_ease = factor(isolation_ease, 
+                                 levels = c("Not sure", "Very difficult", "Somewhat difficult",
+                                            "Neither easy nor difficult", "Somewhat easy",
+                                            "Very easy")),
+         isolation_willingness = factor(isolation_willingness,
+                                        levels = c("Not sure", "Very unwilling",
+                                                   "Somewhat unwilling",
+                                                   "Neither willing nor unwilling",
+                                                   "Somewhat willing", "Very willing")),
+         emp_status = factor(emp_status,
+                                    levels = c("Other", "Retired", "Not working", "Unemployed",
+                                               "Full time student", "Part time employment",
+                                               "Full time employment"))
+                                 
+         
+         )
 
 summary(data_recode)
 
-unique(data$tested)
-unique(data$hh_tested)
 
 
 

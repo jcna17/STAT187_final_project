@@ -13,6 +13,14 @@ raw_data <- read_csv("covid_behavior.csv")
 ```
 
 ## I. Introduction
+This data, which examines people’s behaviors in response to the COVID-19 pandemic, comes from Imperial College London. The data also includes information about COVID-19 test results. Data collection started in March 2020 and is ongoing,, but the subset of the data being used for this project was collected between March 2020 and July 2020. The dataset description does not detail the sampling method, but it states that responses are nationally representative of the general public and that, “people with severe symptoms, people who have been hospitalized, and some other hard to reach group will be under-represented in the sample.” No other sampling bias is suspected. 
+
+This data was collected through interviews and represents an observational study, as there is no direct intervention by the researchers. No bias is suspected in the questions as they were created by a well-respected institution and measure primarily objective factors, such as frequencies as counts. The measurements may be biased towards behaviors that are seen as socially acceptable as people may not feel comfortable admitting to a researcher that they don’t do things like wear a mask or avoid large gatherings.
+
+This data is very relevant as it is about a pandemic that is ongoing. It has been shown that individual behavior has a significant impact on the spread of COVID-19, so examining COVID-related behavior across the United States could potentially be used to identify areas that are likely to have outbreaks. It’s also interesting to observe how COVID-related behavior varies across the United States.
+
+The data was cleaned by first removing the second row of column headers. Columns that were not of interest were removed, and then the remaining columns were renamed to make them easier to work with. All of the data was read in as character data, so columns that contained factor or numeric data were transformed into their respective data type. The data cleaning code can be seen below.
+
 
 ```{r subset_rename}
 #remove second row of headers

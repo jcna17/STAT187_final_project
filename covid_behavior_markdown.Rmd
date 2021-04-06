@@ -1,0 +1,78 @@
+---
+title: "Covid Behavior"
+author: "Jake Campbell, Jin Lee, and Julie Grossman"
+date: "4/5/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+
+raw_data <- read_csv("covid_behavior.csv")
+```
+
+## I. Introduction
+
+```{r subset_rename}
+#remove second row of headers
+data <- raw_data[-1,]
+
+#select columns of interest
+data <- data %>%
+  select("endtime" : "#times wash/sani", "gender" : "employment_status")
+
+#display names before renaming
+head(names(data), 10)
+
+#rename columns
+new_names <- c("endtime", 
+               "state", "qweek", 
+               "hh_contact", "non_hh_contact",
+               "n_leave_home", "tested", 
+               "hh_tested", "cough", 
+               "fever", "lost_smell",
+               "lost_taste", "short_of_breath", 
+               "no_symp", "contact_symp_person",
+               "isolate_after_symp", "doctor_after_symp", 
+               "travel_before_symp", "isolate_if_symp", 
+               "isolation_ease", "isolation_willingness", 
+               "mask", "hand_washing", 
+               "sanitizer", "cover_mouth", 
+               "avoid_symp_person", "avoid_going_out", 
+               "avoid_healthcare", "avoid_pub_transport",
+               "avoid_work_not_home", "avoid_school_not_home", 
+               "avoid_guests", "avoid_s_gath", 
+               "avoid_m_gath", "avoid_l_gath", 
+               "avoid_crowds", "avoid_shopping", 
+               "stop_share_bedroom", "stop_share_meals",
+               "surface_cleaning", "avoid_touching_public_objects", 
+               "n_wash_sanitize", "gender", 
+               "age", "hh_size",
+               "hh_children", "emp_status"
+               )
+
+names(data) <- new_names
+
+#display names after renaming
+head(names(data), 10)
+
+```
+```{r refactor}
+
+```
+
+
+
+
+## II. Data Visualizations
+
+## III. Machine Learning Methods
+
+## IV. Conclusions
+
+## V. Limitations/Recommendations
+
+
+
+

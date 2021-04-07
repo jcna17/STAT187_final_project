@@ -23,12 +23,9 @@ The data was cleaned by first removing the second row of column headers. Columns
 
 
 ```{r subset_rename}
-#remove second row of headers
-data <- raw_data[-1,]
-
 #select columns of interest
-data <- data %>%
-  select("endtime" : "#times wash/sani", "gender" : "employment_status")
+data <- raw_data %>%
+  select("endtime" : "i13_health", "gender" : "employment_status")
 
 #display names before renaming
 head(names(data), 10)

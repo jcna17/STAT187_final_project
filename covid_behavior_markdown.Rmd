@@ -10,6 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(usmap)
 library(socviz)
+library(grid)
 
 
 theme_map <- function(base_size=9, base_family="") {
@@ -162,7 +163,9 @@ data_recode <- data %>%
          emp_status = factor(emp_status,
                                     levels = c("Other", "Retired", "Not working", "Unemployed",
                                                "Full time student", "Part time employment",
-                                               "Full time employment"))
+                                               "Full time employment")),
+         qweek = factor(qweek,
+                        levels = c("week 1", "week 2", "week 3", "week 4", "week 5", "week 6", "week 7", "week 8", "week 9", "week 10", "week 11", "week 12", "week 13"))
                                  
          
          )
@@ -188,8 +191,12 @@ test_data <- data_recode %>% filter(tested == 'Y+' | tested == 'Y-')
 # Tests Results v. Mask Usage
 mask1 <- ggplot(data = test_data, mapping = aes(x = mask, fill = tested)) +
   geom_bar(position = 'dodge') +
-  labs(title = "Test Results by Mask Usage", x = "Mask Usage", y = "Number Tested") +
-  theme(plot.title = element_text(face = 'bold', size = 15, hjust = .5))
+  labs(title = "Test Results by Mask Wearing Frequency", 
+       x = "Frequency of Mask Wearing", 
+       y = "Number of Results",
+       fill = "Test Result") +
+  theme(plot.title = element_text(face = 'bold', size = 15, hjust = .5))+
+  scale_fill_discrete(labels = (c("Positive", "Negative")))
 
 mask1
 ```
@@ -211,11 +218,16 @@ sanitizing_data <- test_data %>%
 sanitizing1 <- ggplot(data = sanitizing_data, 
                       mapping = aes(x = n_wash_sanitize, fill = tested)) +
   geom_density(alpha = .5, color = 'black') +
-  labs(title = "Test Results v. Hand Washing per Day", x = "Frequency of Hand Washing (Daily)", y = "") +
-  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank(), 
-        plot.title = element_text(face = 'bold', size = 15, hjust = .5)) +
-  guides(fill = guide_legend(reverse = TRUE))
+  labs(title = "Handwashing Densities by Test Result", 
+       x = "Frequency of Hand Washing (Daily)", 
+       y = "Density") +
+  #theme(axis.text.y = element_blank(), axis.ticks.y = element_blank(), 
+        #plot.title = element_text(face = 'bold', size = 15, hjust = .5)) +
+  guides(fill = guide_legend(title = "Test Result"))+
+  scale_fill_discrete(labels = (c("Positive", "Negative")))
 sanitizing1
+
+
 ```
 
 A bar graph of test results per week over time (13 weeks) shows the fluctuation of positive COVID-19 tests over the time period. 
@@ -229,11 +241,10 @@ time_data <- test_data %>%
   summarise(sampsize = n()) %>% 
   ungroup()
 
-time_data$qweek <- factor(time_data$qweek,levels = c("week 1", "week 2", "week 3", "week 4", "week 5", "week 6", "week 7", "week 8", "week 9", "week 10", "week 11", "week 12", "week 13"))
 
 # Positive Cases by Time
 
-time1 <- ggplot(data = time_data, mapping = (aes(x = qweek, y = sampsize, fill = qweek))) +
+time1 <- ggplot(data = time_data, mapping = (aes(x = qweek, y = sampsize))) +
   geom_col() +
   guides(fill = FALSE) +
   labs(title = "Positive Tests by Week", x = "Week", y = "Count") +
@@ -258,7 +269,7 @@ us_states_usda <- us_states %>%
 tibble(us_states_usda)
 
 # Filter it under 30 because most of the value of washing hands is under 30
-# if the range is too huge, the mapping will not be able to emphasize the actual data that actually means.
+# if the range is too huge, the mapping will not be able to emphasize what the data  actually means.
 us_sanitize<-us_states_usda %>% filter(n_wash_sanitize <30)
 
 tibble(us_sanitize)
@@ -271,10 +282,12 @@ ggplot(data = us_sanitize,
   geom_polygon(color = "lightgrey") +
   scale_fill_continuous(low = 'red', high = 'cyan') +
  coord_map(projection = "albers", lat0 = 39, lat1 = 45) +
-  labs(title = "Frequency of handwashing") +
-  labs(fill = "handwashing") +
+  labs(title = "Frequency of Daily Handwashing") +
+  labs(fill = "Handwashing Frequency") +
   theme_map()+
-  theme(title=element_text(size=14, face="bold"))
+   theme(plot.title = element_text(face = 'bold', size = 15, hjust = .5),
+        legend.position = "right")
+
 ```
 
 
@@ -291,7 +304,7 @@ stats1 <- data_recode %>%
 stats1$region <- tolower(stats1$state)
 
 us_mask <- us_states %>%
-   left_join(stats1, by = 'region' )
+   left_join(stats1, by = 'region')
 
 ```
 ```{r mask map}
@@ -299,12 +312,16 @@ us_mask <- us_states %>%
 ggplot(data = us_mask,
    mapping = aes(x = long, y = lat,  group = group, fill = mmask))  +
   geom_polygon(color = "lightgrey") +
-  scale_fill_continuous(low = 'red', high = 'cyan') +
+  scale_fill_continuous(low = 'red', high = 'cyan',
+                        breaks = c(2.4, 4),
+                        labels = c("Rarely", "Frequently"))+
  coord_map(projection = "albers", lat0 = 39, lat1 = 45) +
-  labs(title = "Map of Wearing mask") +
-  labs(fill = "Wearing") +
+  labs(title = "Mask Wearing Frequency") +
+  labs(fill = "Mask Wearing Frequency") +
   theme_map()+
-  theme(title=element_text(size=13, face="bold"))
+  theme(plot.title = element_text(face = 'bold', size = 15, hjust = .5),
+        legend.position = "right")
+ 
 ```
 
 

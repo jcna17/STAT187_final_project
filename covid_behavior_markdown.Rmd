@@ -245,7 +245,7 @@ time_data <- test_data %>%
 # Positive Cases by Time
 
 time1 <- ggplot(data = time_data, mapping = (aes(x = qweek, y = sampsize))) +
-  geom_col() +
+  geom_col(fill = "#f8766d") +
   guides(fill = FALSE) +
   labs(title = "Positive Tests by Week", x = "Week", y = "Count") +
   scale_x_discrete(labels = c(1:13)) +
@@ -256,34 +256,31 @@ time1
 
 
 
-```{r sanitize data}
-# Merge the "data_recode" data with "map_data"
+```{r sanitize data, warning = FALSE}
+# merge data_recode with map_data
 us_states <- map_data("state")
-tibble(us_states)
-
 data_recode$region <- tolower(data_recode$state)
 
-us_states_usda <- us_states %>%
-   left_join(data_recode, by = 'region' )
-
-tibble(us_states_usda)
+us_states_recode <- us_states %>%
+   left_join(data_recode, by = 'region')
 
 # Filter it under 30 because most of the value of washing hands is under 30
 # if the range is too huge, the mapping will not be able to emphasize what the data  actually means.
-us_sanitize<-us_states_usda %>% filter(n_wash_sanitize <30)
+us_sanitize<-us_states_recode %>% filter(n_wash_sanitize <30)
 
 tibble(us_sanitize)
 
 ```
+
 ```{r sanitize map}
-# Draw a map about Frequecy of handwashing by state
+# draw a map about Frequecy of handwashing by state
 ggplot(data = us_sanitize,
    mapping = aes(x = long, y = lat,  group = group, fill = n_wash_sanitize))  +
   geom_polygon(color = "lightgrey") +
   scale_fill_continuous(low = 'red', high = 'cyan') +
  coord_map(projection = "albers", lat0 = 39, lat1 = 45) +
-  labs(title = "Frequency of Daily Handwashing") +
-  labs(fill = "Handwashing Frequency") +
+  labs(title = "Average Number of Handwashings per Day") +
+  labs(fill = "Number of Handwashings") +
   theme_map()+
    theme(plot.title = element_text(face = 'bold', size = 15, hjust = .5),
         legend.position = "right")
@@ -291,16 +288,16 @@ ggplot(data = us_sanitize,
 ```
 
 
-```{r mask data}
-# change the value of mask into numeric
+```{r mask data, warning = FALSE}
+# change the value of mask to numeric
 tibble(as.numeric(data_recode$mask))
 
-# Get the mean value of wearing mask in the U.S
+# calculate state mask wearing averages
 stats1 <- data_recode %>%
   group_by(state) %>%
   summarise( mmask = mean(as.numeric(mask), na.rm = TRUE))
 
-#Merge "stats1" data with "us_states"
+#merge stats1 data with us_states
 stats1$region <- tolower(stats1$state)
 
 us_mask <- us_states %>%
@@ -308,7 +305,7 @@ us_mask <- us_states %>%
 
 ```
 ```{r mask map}
-# Draw a map about the mean of wearing mask by state in the U.S
+# draw a map of mean mask wearing by state
 ggplot(data = us_mask,
    mapping = aes(x = long, y = lat,  group = group, fill = mmask))  +
   geom_polygon(color = "lightgrey") +

@@ -263,6 +263,7 @@ time1
 us_states <- map_data("state")
 data_recode$region <- tolower(data_recode$state)
 
+
 us_states_recode <- us_states %>%
    left_join(data_recode, by = 'region')
 
@@ -347,11 +348,15 @@ test_sample <- sample(1:955, 800)
 
 #create training data
 test_results_train <- test_results[test_sample,]
+test_results_train <- test_results_train %>%
+  select(-region)
 test_results_train_labels <- as.data.frame(test_results[test_sample,])
 
 
 #create testing data
 test_results_test <- test_results[-test_sample,]
+test_results_test <- test_results_test %>%
+  select(-region)
 test_results_test_labels <- as.data.frame(test_results[-test_sample,])
 
 ```
@@ -382,11 +387,16 @@ data_recode_predict <- data_recode %>%
          -travel_before_symp, -hh_size, -hh_children, -avoid_work_not_home, -avoid_school_not_home, -age,
          -gender, -emp_status, -tested)
 
-data_recode_predict_no_state <- data_recode_predict %>%
+data_recode_predict2 <- data_recode %>%
+  select(state, hh_contact, non_hh_contact, n_leave_home, isolate_if_symp:avoid_pub_transport,
+         avoid_guests:n_wash_sanitize)
+
+data_recode_predict_no_state <- data_recode_predict2 %>%
   select(-state)
 
 #add prediction column
-data_recode_predict$pred <- predict(test_results_model, data_recode_predict_no_state)
+##CHECK THIS LINE
+data_recode_predict2$pred <- predict(test_results_model, data_recode_predict_no_state)
 
 #check for NAs
 sum(is.na(test_results))
@@ -396,7 +406,7 @@ sum(is.na(test_results))
 ```
 
 ```{r predictmapdata, message = FALSE}
-predict_map_data <- data_recode_predict %>%
+predict_map_data <- data_recode_predict2 %>%
   #make a column of the predictions as integers so positive cases can be counted
   mutate(pred_int = ifelse(pred == "Y+", 1, 0)) %>%
   #group by state and determine percent of positive cases
@@ -413,6 +423,7 @@ us_states <- map_data("state")
 predict_map_join <- us_states %>%
    left_join(predict_map_data, by = "region")
 ```
+
 
 ```{r predictmap}
 ggplot(data = predict_map_join,

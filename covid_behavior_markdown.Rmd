@@ -11,6 +11,8 @@ library(tidyverse)
 library(usmap)
 library(socviz)
 library(grid)
+library(C50)
+library(gmodels)
 
 
 theme_map <- function(base_size=9, base_family="") {
@@ -325,6 +327,107 @@ ggplot(data = us_mask,
 
 
 ## III. Machine Learning Methods
+```{r mlprep}
+test_results <- data_recode %>%
+  #select only observations that have a positive or negative test result
+  filter(tested %in% c("Y-", "Y+")) %>%
+  #select columns to be used in training of model
+  select(-endtime, -state, -qweek, -hh_tested, -cough, -fever, -short_of_breath, -lost_smell, -lost_taste,
+         -short_of_breath, -no_symp, -contact_symp_person, -isolate_after_symp, -doctor_after_symp,
+         -travel_before_symp, -hh_size, -hh_children, -avoid_work_not_home, -avoid_school_not_home, -age,
+         -gender, -emp_status) %>%
+  #refactors tested column so that only levels are positive and negative
+  mutate(tested = droplevels(tested))
+
+#check to ensure that there are no NA observations
+sum(is.na(test_results))
+         
+#generate random numbers for creating train and test set
+test_sample <- sample(1:955, 800)
+
+#create training data
+test_results_train <- test_results[test_sample,]
+test_results_train_labels <- as.data.frame(test_results[test_sample,])
+
+
+#create testing data
+test_results_test <- test_results[-test_sample,]
+test_results_test_labels <- as.data.frame(test_results[-test_sample,])
+
+```
+```{r mltrain}
+#create the model
+test_results_model <- C5.0(tested ~ ., data = test_results_train)
+
+#show information about the model
+test_results_model
+summary(test_results_model)
+```
+```{r mltest}
+#assess the accuracy of the model
+test_results_predict <- predict(test_results_model, test_results_test[-4])
+
+CrossTable(test_results_test$tested, test_results_predict,
+            prop.chisq = FALSE, prop.c =FALSE,
+            prop.r = FALSE, 
+            dnn = c('actual data', 'predicted data'))
+
+
+```
+```{r predictfull}
+data_recode_predict <- data_recode %>%
+  #select columns used by model for full dataset
+  select(-endtime, -qweek, -hh_tested, -cough, -fever, -short_of_breath, -lost_smell, -lost_taste,
+         -short_of_breath, -no_symp, -contact_symp_person, -isolate_after_symp, -doctor_after_symp,
+         -travel_before_symp, -hh_size, -hh_children, -avoid_work_not_home, -avoid_school_not_home, -age,
+         -gender, -emp_status, -tested)
+
+data_recode_predict_no_state <- data_recode_predict %>%
+  select(-state)
+
+#add prediction column
+data_recode_predict$pred <- predict(test_results_model, data_recode_predict_no_state)
+
+#check for NAs
+sum(is.na(test_results))
+
+
+
+```
+
+```{r predictmapdata, message = FALSE}
+predict_map_data <- data_recode_predict %>%
+  #make a column of the predictions as integers so positive cases can be counted
+  mutate(pred_int = ifelse(pred == "Y+", 1, 0)) %>%
+  #group by state and determine percent of positive cases
+  group_by(state) %>%
+  summarize(
+    count = n(),
+    positive_cases = sum(pred_int),
+    percent_cases = positive_cases / count * 100
+  ) %>%
+  mutate(region = tolower(state)) %>%
+  ungroup()
+
+us_states <- map_data("state")
+predict_map_join <- us_states %>%
+   left_join(predict_map_data, by = "region")
+```
+
+```{r predictmap}
+ggplot(data = predict_map_join,
+   mapping = aes(x = long, y = lat,  group = group, fill = percent_cases))  +
+  geom_polygon(color = "lightgrey") +
+  scale_fill_continuous(low = "gray", high = "red") +
+ coord_map(projection = "albers", lat0 = 39, lat1 = 45) +
+  labs(title = "Percent of Population Predicted to Test Positive") +
+  labs(fill = "% Positive Cases") +
+  theme_map()+
+   theme(plot.title = element_text(face = 'bold', size = 15, hjust = .5),
+        legend.position = "right")
+
+```
+
 
 ## IV. Conclusions
 

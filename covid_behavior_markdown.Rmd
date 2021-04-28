@@ -258,27 +258,33 @@ time1
 
 
 
-```{r sanitize data, warning = FALSE}
+```{r sanitize data, warning = FALSE, message = FALSE}
 # merge data_recode with map_data
 us_states <- map_data("state")
 data_recode$region <- tolower(data_recode$state)
 
+#summarize data by state
+us_sanitize <- data_recode %>% 
+  filter(n_wash_sanitize < 100) %>%
+  group_by(region) %>%
+  summarize(mean_handwash = mean(n_wash_sanitize))
+tibble(us_sanitize)
+
 
 us_states_recode <- us_states %>%
-   left_join(data_recode, by = 'region')
+   left_join(us_sanitize, by = 'region')
 
-# Filter it under 30 because most of the value of washing hands is under 30
-# if the range is too huge, the mapping will not be able to emphasize what the data  actually means.
-us_sanitize<-us_states_recode %>% filter(n_wash_sanitize <30)
 
-tibble(us_sanitize)
+
+
+
 
 ```
 
 ```{r sanitize map}
 # draw a map about Frequecy of handwashing by state
-ggplot(data = us_sanitize,
-   mapping = aes(x = long, y = lat,  group = group, fill = n_wash_sanitize))  +
+ggplot(data = us_states_recode,
+   mapping = aes(x = long, y = lat,  group = group, fill = mean_handwash))  +
   geom_polygon(color = "lightgrey") +
   scale_fill_continuous(low = 'red', high = 'cyan') +
  coord_map(projection = "albers", lat0 = 39, lat1 = 45) +
@@ -291,10 +297,7 @@ ggplot(data = us_sanitize,
 ```
 
 
-```{r mask data, warning = FALSE}
-# change the value of mask to numeric
-tibble(as.numeric(data_recode$mask))
-
+```{r mask data, warning = FALSE, message = FALSE}
 # calculate state mask wearing averages
 stats1 <- data_recode %>%
   group_by(state) %>%
@@ -316,7 +319,7 @@ ggplot(data = us_mask,
                         breaks = c(2.4, 4),
                         labels = c("Rarely", "Frequently"))+
  coord_map(projection = "albers", lat0 = 39, lat1 = 45) +
-  labs(title = "Mask Wearing Frequency") +
+  labs(title = "Mean Mask Wearing Frequency") +
   labs(fill = "Mask Wearing Frequency") +
   theme_map()+
   theme(plot.title = element_text(face = 'bold', size = 15, hjust = .5),
@@ -380,13 +383,6 @@ CrossTable(test_results_test$tested, test_results_predict,
 
 ```
 ```{r predictfull}
-data_recode_predict <- data_recode %>%
-  #select columns used by model for full dataset
-  select(-endtime, -qweek, -hh_tested, -cough, -fever, -short_of_breath, -lost_smell, -lost_taste,
-         -short_of_breath, -no_symp, -contact_symp_person, -isolate_after_symp, -doctor_after_symp,
-         -travel_before_symp, -hh_size, -hh_children, -avoid_work_not_home, -avoid_school_not_home, -age,
-         -gender, -emp_status, -tested)
-
 data_recode_predict2 <- data_recode %>%
   select(state, hh_contact, non_hh_contact, n_leave_home, isolate_if_symp:avoid_pub_transport,
          avoid_guests:n_wash_sanitize)
@@ -395,7 +391,6 @@ data_recode_predict_no_state <- data_recode_predict2 %>%
   select(-state)
 
 #add prediction column
-##CHECK THIS LINE
 data_recode_predict2$pred <- predict(test_results_model, data_recode_predict_no_state)
 
 #check for NAs

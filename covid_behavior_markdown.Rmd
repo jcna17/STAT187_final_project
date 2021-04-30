@@ -2,7 +2,9 @@
 title: "Covid Behavior"
 author: "Jake Campbell, Jin Lee, and Julie Grossman"
 date: "4/5/2021"
-output: html_document
+output: 
+  html_document:
+    toc: true
 ---
 
 ```{r setup, include=FALSE}
@@ -38,6 +40,8 @@ raw_data <- read_csv("covid_behavior.csv")
 ```
 
 ## I. Introduction
+In early 2020, the news began reporting on a new disease in China. In March of 2020, this disease, COVID-19, began spreading in the United States. Despite lockdowns and mask mandates, it morphed into a  pandemic. Over a year later, the pandemic continues. One of the reasons the pandemic has continued, is that not everybody takes it seriously. We hypothesize that people who engage in behaviors traditionally associated with mitigating the risk of contracting COVID-19, such as handwashing, mask wearing, and avoiding social gatherings, are more likely to contract COVID.
+
 This data, which examines people’s behaviors in response to the COVID-19 pandemic, comes from Imperial College London. The data also includes information about COVID-19 test results. Data collection started in March 2020 and is ongoing,, but the subset of the data being used for this project was collected between March 2020 and July 2020. The dataset description does not detail the sampling method, but it states that responses are nationally representative of the general public and that, “people with severe symptoms, people who have been hospitalized, and some other hard to reach group will be under-represented in the sample.” No other sampling bias is suspected. 
 
 This data was collected through interviews and represents an observational study, as there is no direct intervention by the researchers. No bias is suspected in the questions as they were created by a well-respected institution and measure primarily objective factors, such as frequencies as counts. The measurements may be biased towards behaviors that are seen as socially acceptable as people may not feel comfortable admitting to a researcher that they don’t do things like wear a mask or avoid large gatherings.
@@ -183,6 +187,7 @@ head(summary(data_recode[13:20]))
 
 ## II. Data Visualizations
 
+### A. Test Results by Mask Wearing Frequency
 A bar graph of positive and negative test results by mask usage demonstrates that the more often one wears a mask, the more likely they are to test negative for COVID-19. 
 ```{r masks, message = FALSE, warning = FALSE}
 # data with applied filters  
@@ -203,6 +208,7 @@ mask1 <- ggplot(data = test_data, mapping = aes(x = mask, fill = tested)) +
 mask1
 ```
 
+### B. Handwashing Density Plot
 Density plots of hand washing and sanitizing habits compared to test results demonstrates that the more often one washes their hands, the more likely they are to test negative for COVID-19. 
 ```{r sanitizing, message = FALSE, warning = FALSE}
 # # Graph 2: positive tests v. number of times sanitizing per day 
@@ -232,6 +238,7 @@ sanitizing1
 
 ```
 
+### C. Positive Tests Over Time
 A bar graph of test results per week over time (13 weeks) shows the fluctuation of positive COVID-19 tests over the time period. 
 ```{r time, message = FALSE, warning = FALSE}
 # # Graph 3: positive tests v. time
@@ -257,8 +264,8 @@ time1
 ```
 
 
-
-```{r sanitize data, warning = FALSE, message = FALSE}
+### D. Average Number of Handwashings by State
+```{r sanitizedata, warning = FALSE, message = FALSE}
 # merge data_recode with map_data
 us_states <- map_data("state")
 data_recode$region <- tolower(data_recode$state)
@@ -281,7 +288,7 @@ us_states_recode <- us_states %>%
 
 ```
 
-```{r sanitize map}
+```{r sanitizemap}
 # draw a map about Frequecy of handwashing by state
 ggplot(data = us_states_recode,
    mapping = aes(x = long, y = lat,  group = group, fill = mean_handwash))  +
@@ -296,8 +303,8 @@ ggplot(data = us_states_recode,
 
 ```
 
-
-```{r mask data, warning = FALSE, message = FALSE}
+### E. Average Mask Wearing Frequency by State
+```{r maskdata, warning = FALSE, message = FALSE}
 # calculate state mask wearing averages
 stats1 <- data_recode %>%
   group_by(state) %>%
@@ -310,7 +317,7 @@ us_mask <- us_states %>%
    left_join(stats1, by = 'region')
 
 ```
-```{r mask map}
+```{r maskmap}
 # draw a map of mean mask wearing by state
 ggplot(data = us_mask,
    mapping = aes(x = long, y = lat,  group = group, fill = mmask))  +
@@ -330,7 +337,9 @@ ggplot(data = us_mask,
 
 
 
-## III. Machine Learning Methods
+## III. Decision Tree to Predict Positive Cases
+### A. Data Prep
+Since most of the observations in the dataset don't have a positive or negative test result associated with them, the model was developed using the subset that did have associated test results. These observations were selected and features that were not associated with behavior were removed. The data was then split into a training set (with 800 observations) and a testing set (with 155 observations). The random seed was set for the data splitting as the results varied greatly when it was not.
 ```{r mlprep}
 test_results <- data_recode %>%
   #select only observations that have a positive or negative test result
@@ -347,6 +356,7 @@ test_results <- data_recode %>%
 sum(is.na(test_results))
          
 #generate random numbers for creating train and test set
+set.seed(1)
 test_sample <- sample(1:955, 800)
 
 #create training data
@@ -363,14 +373,19 @@ test_results_test <- test_results_test %>%
 test_results_test_labels <- as.data.frame(test_results[-test_sample,])
 
 ```
+### B. Model Training
+A decsion tree was used to predict which individuals would be likely to become infected with COVID-19. Decision trees work by splitting the data to minimize the entropy of each group and stopping the splitting once the splits no longer reduce entropy.
+
+People who were predicted to test positive displayed behaviors like not washing their hands and being in a situation where it is difficult to isolate, which seem to make sense, However, both people who reported their frequency of avoiding medium gatherings as always or not at all were predicted to test positive. This is most likely due to the fact that the training dataset is relatively small compared to the full dataset. The accuracy of the model with the training data was 86%.   
 ```{r mltrain}
 #create the model
 test_results_model <- C5.0(tested ~ ., data = test_results_train)
-
 #show information about the model
 test_results_model
 summary(test_results_model)
 ```
+### C. Model Testing and Assessment
+The accuracy of the model on the testing data was approximately 81%. However, this is not an accurate representation of the effectiveness of the model. The model is very effective at predicting negative cases, but predicted almost 5 times as many false negative cases as it did correct positive cases. This shows that the model is biased towards predicting negative cases. A cost matrix and boosted decision tree were initially used, but the boosted tree made interpretation too difficult and the cost matrix was ineffective at increasing the accuracy of the model.
 ```{r mltest}
 #assess the accuracy of the model
 test_results_predict <- predict(test_results_model, test_results_test[-4])
@@ -382,6 +397,8 @@ CrossTable(test_results_test$tested, test_results_predict,
 
 
 ```
+### D. Predicting on the Full Dataset
+After being trained on the observations that contained test results, the model was run on the entire dataset. This generated predictions of positive or negative tests for each observation.
 ```{r predictfull}
 data_recode_predict2 <- data_recode %>%
   select(state, hh_contact, non_hh_contact, n_leave_home, isolate_if_symp:avoid_pub_transport,
@@ -400,7 +417,9 @@ sum(is.na(test_results))
 
 ```
 
-```{r predictmapdata, message = FALSE}
+### E. Map of Predictions
+The below map shows the percentage of people sampled in a given state who were predicted to test positive for COVID-19. The states that show 0% of people in that state testing positive were often a result of not many people from that state being sampled.
+```{r predictmapdata, message = FALSE, warning = FALSE}
 predict_map_data <- data_recode_predict2 %>%
   #make a column of the predictions as integers so positive cases can be counted
   mutate(pred_int = ifelse(pred == "Y+", 1, 0)) %>%
@@ -413,6 +432,9 @@ predict_map_data <- data_recode_predict2 %>%
   ) %>%
   mutate(region = tolower(state)) %>%
   ungroup()
+
+#table containing the data used to generate the map
+head(predict_map_data, 20)
 
 us_states <- map_data("state")
 predict_map_join <- us_states %>%
@@ -436,8 +458,12 @@ ggplot(data = predict_map_join,
 
 
 ## IV. Conclusions
+Overall, it seems as if individual behaviors such as mask wearing and hand washing are associated with fewer positive cases when looked at in isolation. This can be seen in the graphs of mask wearing and handwashing. There are also strong regional patterns, with very frequent mask wearing in the northeast and infrequent mask wearing in the midwest. However, when these factors are looked at in combination with all the other behavior factors, the model generated to predict positve tests was not particularly accurate and some of its predictions seemed counterintuitive, such as predicting a positive test result for people who always avoid gatherings  
 
 ## V. Limitations/Recommendations
+The inconsistencies in the model are likely a result of the fact that only 855 out of the 14,031 (~6%) observations in the dataset were associated with a positive or negative test result. While the entire dataset is representative of the United States, it's very unlikely that the small subset of observations that had test results associated with them is. Training a model on a small, unrepresentative dataset will not result in an effective model.
+
+Despite the model's limited effectiveness, the graphs demonstrate that people who wash their hands or wear masks frequently are more likely to test negative for COVID-19 than people who do not. This is consistent with CDC guidelines so we recommend following CDC guidelines. We also recommend checking COVID-19 risk maps before traveling out of the state or county. 
 
 
 

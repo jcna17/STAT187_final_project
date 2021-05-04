@@ -1,5 +1,5 @@
 ---
-title: "Covid Behavior"
+title: "Examining the Relationship Between Behavior and Risk of Contracting COVID-19"
 author: "Jake Campbell, Jin Lee, and Julie Grossman"
 date: "4/5/2021"
 output: 
@@ -40,15 +40,15 @@ raw_data <- read_csv("covid_behavior.csv")
 ```
 
 ## I. Introduction
-In early 2020, the news began reporting on a new disease in China. In March of 2020, this disease, COVID-19, began spreading in the United States. Despite lockdowns and mask mandates, it morphed into a  pandemic. Over a year later, the pandemic continues. One of the reasons the pandemic has continued, is that not everybody takes it seriously. We hypothesize that people who engage in behaviors traditionally associated with mitigating the risk of contracting COVID-19, such as handwashing, mask wearing, and avoiding social gatherings, are more likely to contract COVID.
+In early 2020, the news began reporting on a new disease in China. In March of 2020, this disease, COVID-19, began spreading in the United States. Despite lockdowns and mask mandates, it morphed into a  pandemic. Over a year later, the pandemic continues. One of the reasons the pandemic has continued, is that not everybody takes it seriously. We hypothesize that people who engage in behaviors traditionally associated with mitigating the risk of contracting COVID-19, such as handwashing, mask wearing, and avoiding social gatherings, are less likely to contract COVID.
 
-This data, which examines people’s behaviors in response to the COVID-19 pandemic, comes from Imperial College London. The data also includes information about COVID-19 test results. Data collection started in March 2020 and is ongoing,, but the subset of the data being used for this project was collected between March 2020 and July 2020. The dataset description does not detail the sampling method, but it states that responses are nationally representative of the general public and that, “people with severe symptoms, people who have been hospitalized, and some other hard to reach group will be under-represented in the sample.” No other sampling bias is suspected. 
+This data, which examines people’s behaviors in response to the COVID-19 pandemic, comes from Imperial College London. The data also includes information about COVID-19 test results. Data collection started in March 2020 and is ongoing, but the subset of the data being used for this project was collected between March 2020 and July 2020. The dataset description does not detail the sampling method, but it states that responses are nationally representative of the general public and that, “people with severe symptoms, people who have been hospitalized, and some other hard to reach group will be under-represented in the sample.” No other sampling bias is suspected. 
 
 This data was collected through interviews and represents an observational study, as there is no direct intervention by the researchers. No bias is suspected in the questions as they were created by a well-respected institution and measure primarily objective factors, such as frequencies as counts. The measurements may be biased towards behaviors that are seen as socially acceptable as people may not feel comfortable admitting to a researcher that they don’t do things like wear a mask or avoid large gatherings.
 
 This data is very relevant as it is about a pandemic that is ongoing. It has been shown that individual behavior has a significant impact on the spread of COVID-19, so examining COVID-related behavior across the United States could potentially be used to identify areas that are likely to have outbreaks. It’s also interesting to observe how COVID-related behavior varies across the United States.
 
-The data was cleaned by first removing the second row of column headers. Columns that were not of interest were removed, and then the remaining columns were renamed to make them easier to work with. All of the data was read in as character data, so columns that contained factor or numeric data were transformed into their respective data type. The data cleaning code can be seen below.
+The data was cleaned by first removing columns that were not of interest. The remaining columns were renamed to make them easier to work with. All of the data was read in as character data, so columns that contained factor or numeric data were transformed into their respective data type. The data cleaning code can be seen below.
 
 
 ```{r subset_rename}
@@ -182,13 +182,12 @@ head(summary(data_recode[13:20]))
 
 ```
 
-
-
-
 ## II. Data Visualizations
 
 ### A. Test Results by Mask Wearing Frequency
-A bar graph of positive and negative test results by mask usage demonstrates that the more often one wears a mask, the more likely they are to test negative for COVID-19. 
+A bar graph of positive and negative test results by mask usage demonstrates that the more often one wears a mask, the more likely they are to test negative for COVID-19. While there may be confounding variables due to other behaviors, type of mask, what one defines as "frequent", and close contacts, it is demonstrated that the more often an individual wears a mask, the less likely they are to test positive for COVID-19. 
+
+Of the 955 individuals, 3.56% never wore a mask, 4.4% rarely wore a mask, 14.24% sometimes wore a mask, 21.68% frequently wore a mask, and 56.13% always wore a mask. 188(19.69%) tested positive for COVID-19, while 767(80.31%) tested negative for COVID-19. 
 ```{r masks, message = FALSE, warning = FALSE}
 # data with applied filters  
 test_data <- data_recode %>% filter(tested == 'Y+' | tested == 'Y-')
@@ -209,7 +208,9 @@ mask1
 ```
 
 ### B. Handwashing Density Plot
-Density plots of hand washing and sanitizing habits compared to test results demonstrates that the more often one washes their hands, the more likely they are to test negative for COVID-19. 
+Density plots of hand washing and sanitizing habits compared to test results demonstrates that the more often one washes their hands, the more likely they are to test negative for COVID-19. While there may be confounding variables due to other behaviors, frequency of mask wearing, and close contacts, it is demonstrated that the more often an individual washes their hands, the less likely they are to test positive for COVID-19. 
+
+Of the sample size of 59, the median number of hand washing per day of those who tested positive for COVID-19 was 12, while it was 17.5 for those who tested negative.
 ```{r sanitizing, message = FALSE, warning = FALSE}
 # # Graph 2: positive tests v. number of times sanitizing per day 
 
@@ -238,33 +239,9 @@ sanitizing1
 
 ```
 
-### C. Positive Tests Over Time
-A bar graph of test results per week over time (13 weeks) shows the fluctuation of positive COVID-19 tests over the time period. 
-```{r time, message = FALSE, warning = FALSE}
-# # Graph 3: positive tests v. time
 
-# Data modification
-time_data <- test_data %>% 
-  filter(tested == 'Y+') %>% 
-  group_by(tested, qweek) %>% 
-  summarise(sampsize = n()) %>% 
-  ungroup()
-
-
-# Positive Cases by Time
-
-time1 <- ggplot(data = time_data, mapping = (aes(x = qweek, y = sampsize))) +
-  geom_col(fill = "#f8766d") +
-  guides(fill = FALSE) +
-  labs(title = "Positive Tests by Week", x = "Week", y = "Count") +
-  scale_x_discrete(labels = c(1:13)) +
-  theme(plot.title = element_text(face = 'bold', size = 15, hjust = .5))
-time1
-
-```
-
-
-### D. Average Number of Handwashings by State
+### C. Average Number of Handwashings by State
+In order to visualize the frequency of handwashing in the United States, the data has been translated onto the United States map. The selected color of each state indicates the level of handwashing frequency. As the color of the state comes to be more of a blue color, this showcases a higher frequency of handwashing, which signifies a more overall handwashing performance as a state. As the color of the state comes to be more of a red color, this showcases a lower frequency of handwashing, which signifies a lesser overall handwashing performance as a state. The spectrum of color radiance from blue to red can assist in indicating the frequency of handwashing and the comparison from state to state.
 ```{r sanitizedata, warning = FALSE, message = FALSE}
 # merge data_recode with map_data
 us_states <- map_data("state")
@@ -303,7 +280,9 @@ ggplot(data = us_states_recode,
 
 ```
 
-### E. Average Mask Wearing Frequency by State
+### D. Average Mask Wearing Frequency by State
+In order to visualize the medium of wearing masks in the United States, the data has been translated onto the United States map. The selected color of each state indicates the level of mask wearing medium. As the color of the state comes to be more of a blue color, this showcases a higher medium of wearing masks, which signifies a more overall mask-wearing performance as a state. For example, it is evident that New York (4.171958 medium), New Jersey (4.120181 medium) and Vermont (4.062500 medium) portrays a bluer color, signifying a higher medium of wearing masks. As the color of the state comes to be more of a red color, this showcases a lower medium of wearing mask, which signifies a lesser overall mask-wearing performance as a state. For example, it is evident that North Dakota (2.263158 medium), Montana (2.547170 medium) and Kansas (2.816327 medium) portrays a redder color, signifying a lower medium of wearing masks. The spectrum of color radiance from blue to red can assist in indicating the medium of wearing masks and the comparison from state to state.
+
 ```{r maskdata, warning = FALSE, message = FALSE}
 # calculate state mask wearing averages
 stats1 <- data_recode %>%
@@ -317,6 +296,7 @@ us_mask <- us_states %>%
    left_join(stats1, by = 'region')
 
 ```
+
 ```{r maskmap}
 # draw a map of mean mask wearing by state
 ggplot(data = us_mask,
@@ -324,7 +304,7 @@ ggplot(data = us_mask,
   geom_polygon(color = "lightgrey") +
   scale_fill_continuous(low = 'red', high = 'cyan',
                         breaks = c(2.4, 4),
-                        labels = c("Rarely", "Frequently"))+
+                        labels = c("Rarely (2.4)", "Frequently (4)"))+
  coord_map(projection = "albers", lat0 = 39, lat1 = 45) +
   labs(title = "Mean Mask Wearing Frequency") +
   labs(fill = "Mask Wearing Frequency") +
@@ -385,7 +365,7 @@ test_results_model
 summary(test_results_model)
 ```
 ### C. Model Testing and Assessment
-The accuracy of the model on the testing data was approximately 81%. However, this is not an accurate representation of the effectiveness of the model. The model is very effective at predicting negative cases, but predicted almost 5 times as many false negative cases as it did correct positive cases. This shows that the model is biased towards predicting negative cases. A cost matrix and boosted decision tree were initially used, but the boosted tree made interpretation too difficult and the cost matrix was ineffective at increasing the accuracy of the model.
+The accuracy of the model on the testing data was approximately 81%. However, this is not an accurate representation of the effectiveness of the model. The model is very effective at predicting negative cases, but predicted almost 5 times as many false negative cases as it did true positive cases. This shows that the model is biased towards predicting negative cases. A cost matrix and boosted decision tree were initially used, but the boosted tree made interpretation too difficult and the cost matrix was ineffective at increasing the accuracy of the model.
 ```{r mltest}
 #assess the accuracy of the model
 test_results_predict <- predict(test_results_model, test_results_test[-4])
